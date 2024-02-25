@@ -1,0 +1,40 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+mainpath = 'https://www.coindesk.com/tag/news/'
+max_pagenum = 924  # 924
+
+def crawl_coindesk():
+    for i in range(1, max_pagenum + 1):
+        page_url = f"{mainpath}{i}/"
+        response = requests.get(page_url)
+        if response.status_code == 200:
+            parse_page(response)
+
+def parse_page(response):
+    soup = BeautifulSoup(response.content, 'html.parser')
+    articles = soup.find_all("div", class_="article-card")
+
+    for article in articles:
+        name = article.find("a", class_="card-title")
+        article_name = name.text.strip() if name else "N/A"
+
+        author = article.find("span", class_="typography__StyledTypography-sc-owin6q-0 hirYAs")
+        article_author = author.text.strip() if author else "N/A"
+
+        date = article.find("span", class_="typography__StyledTypography-sc-owin6q-0 iOUkmj")
+        article_date = date.text.strip() if date else "N/A"
+
+        content = article.find("span", class_="content-text")
+        article_content = content.text.strip() if content else "N/A"
+
+        write_to_csv(article_name, article_author, article_date, article_content)
+
+def write_to_csv(article_name, article_author, article_date, article_content):
+    with open('coindesk_data_1.csv', 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([article_name, article_author, article_date, article_content])
+
+if __name__ == "__main__":
+    crawl_coindesk()
